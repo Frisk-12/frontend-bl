@@ -3,48 +3,117 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portfolio - Mio Sito</title>
+  <title>Portfolio - Calcola Investimenti</title>
   <link rel="stylesheet" href="styles.css">
-  <style>
-    /* Se desideri aggiungere eventuali stili specifici, puoi inserirli qui */
-  </style>
 </head>
 <body>
   <header>
     <nav>
+      <div class="logo">
+        <!-- Inserisci il tuo logo (sostituisci logo.png) -->
+        <img src="logo.png" alt="Logo">
+      </div>
       <ul>
         <li><a href="index.html">Home</a></li>
-        <li><a href="portfolio.html">Portfolio</a></li>
+        <li><a href="portfolio.html" class="active">Portfolio</a></li>
       </ul>
     </nav>
   </header>
   <main>
-    <h1>Portfolio</h1>
-    <p>Qui verranno mostrati i dati estratti dalle API.</p>
-    <!-- Sezione per i dati dei pesi per settore (MSCI Weights - Sector) -->
-    <section id="sector-weights">
-      <h2>MSCI Weights - Sector</h2>
-      <pre id="sector-weights-data">Caricamento dati...</pre>
+    <section class="portfolio-section">
+      <h1>Calcola il tuo Portafoglio Ottimale</h1>
+      <form id="portfolio-form">
+        <div class="form-group">
+          <label for="risk_aversion">Risk Aversion:</label>
+          <input type="number" id="risk_aversion" name="risk_aversion" step="0.1" required>
+        </div>
+        <div class="form-group">
+          <label for="max_deviation">Max Deviation:</label>
+          <input type="number" id="max_deviation" name="max_deviation" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label for="views">Views (in formato JSON):</label>
+          <textarea id="views" name="views" rows="4" placeholder='[{"asset": "AAPL", "expected_return": 0.05}]'></textarea>
+        </div>
+        <!-- Parametri per il recupero dei dati storici (price_data) -->
+        <div class="form-group">
+          <label for="start_date">Data Inizio (YYYY-MM-DD):</label>
+          <input type="date" id="start_date" name="start_date" value="2024-01-01" required>
+        </div>
+        <div class="form-group">
+          <label for="end_date">Data Fine (YYYY-MM-DD):</label>
+          <input type="date" id="end_date" name="end_date" value="2025-01-01" required>
+        </div>
+        <button type="submit" class="btn">Calcola Portafoglio</button>
+      </form>
+      <div id="result" class="result"></div>
     </section>
-    <!-- Potresti aggiungere altre sezioni per gli altri endpoint, ad esempio per country, index data, ecc. -->
   </main>
+  <footer>
+    <p>&copy; 2025 Mio Sito Finanziario. Tutti i diritti riservati.</p>
+  </footer>
   <script>
-    // Inserisci l'URL pubblico del tuo backend su Railway (sostituisci con quello reale)
-    const BACKEND_URL = "https://railway-flask-production-aeda.up.railway.app";
-    // Esempio: Chiamata per ottenere i dati di MSCI Weights - Sector
-    fetch(`${BACKEND_URL}/api/weights/sector`)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error("Errore nella chiamata API");
+    document.getElementById('portfolio-form').addEventListener('submit', async function(event) {
+      event.preventDefault();
+      
+      // Recupera i valori dei parametri
+      const riskAversion = parseFloat(document.getElementById('risk_aversion').value);
+      const maxDeviation = parseFloat(document.getElementById('max_deviation').value);
+      let views;
+      try {
+        views = JSON.parse(document.getElementById('views').value || '[]');
+      } catch (error) {
+        alert('Il formato delle views non è valido. Inserisci un JSON valido.');
+        return;
+      }
+      
+      const startDate = document.getElementById('start_date').value;
+      const endDate = document.getElementById('end_date').value;
+      
+      try {
+        // Recupera il market composition da /api/weights/sector
+        const sectorResponse = await fetch('/api/weights/sector');
+        const marketComposition = await sectorResponse.json();
+        
+        // Recupera i dati storici (price_data) da /api/index/data
+        const priceResponse = await fetch(`/api/index/data?start_date=${startDate}&end_date=${endDate}`);
+        const priceData = await priceResponse.json();
+        
+        // Costruisce il payload per l'endpoint Black-Litterman
+        const payload = {
+          market_composition: marketComposition,
+          risk_aversion: riskAversion,
+          max_deviation: maxDeviation,
+          views: views,
+          price_data: priceData
+        };
+        
+        // Chiama l'endpoint per calcolare i pesi ottimali
+        const blResponse = await fetch('/api/black-litterman/optimal-weights', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        
+        const result = await blResponse.json();
+        
+        // Visualizza il risultato in maniera dinamica e accattivante
+        let resultHTML = '<h2>Risultati Ottimali</h2>';
+        if(result.error) {
+          resultHTML += `<p class="error">Errore: ${result.error}</p>`;
+        } else {
+          resultHTML += '<table><thead><tr><th>Asset</th><th>Peso</th></tr></thead><tbody>';
+          for(const asset in result) {
+            resultHTML += `<tr><td>${asset}</td><td>${(result[asset] * 100).toFixed(2)}%</td></tr>`;
+          }
+          resultHTML += '</tbody></table>';
         }
-        return response.json();
-      })
-      .then(data => {
-        document.getElementById('sector-weights-data').innerText = JSON.stringify(data, null, 2);
-      })
-      .catch(error => {
-        document.getElementById('sector-weights-data').innerText = "Errore nel recuperare i dati: " + error;
-      });
+        document.getElementById('result').innerHTML = resultHTML;
+      } catch (error) {
+        console.error('Errore durante la chiamata alle API:', error);
+        document.getElementById('result').innerHTML = '<p class="error">Si è verificato un errore. Riprova più tardi.</p>';
+      }
+    });
   </script>
 </body>
 </html>
