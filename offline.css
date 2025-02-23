@@ -1,47 +1,157 @@
-/* styles.css */
+/* Stile base */
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
   margin: 0;
   padding: 0;
-  background: #f4f4f4;
+  background-color: #f7f9fc;
+  color: #333;
 }
 
+/* Header e Navigazione */
 header {
-  background: #333;
-  padding: 10px 20px;
+  background-color: #004a99;
+  padding: 1em 0;
 }
 
-header nav ul {
+nav {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+
+nav .logo img {
+  height: 40px;
+}
+
+nav ul {
   list-style: none;
+  display: flex;
   margin: 0;
   padding: 0;
-  display: flex;
 }
 
-header nav ul li {
-  margin-right: 15px;
+nav ul li {
+  margin-left: 20px;
 }
 
-header nav ul li a {
+nav ul li a {
   color: #fff;
   text-decoration: none;
   font-weight: bold;
 }
 
-main {
-  padding: 20px;
+nav ul li a.active,
+nav ul li a:hover {
+  color: #ffa500;
 }
 
-section {
-  background: #fff;
-  padding: 15px;
+/* Main */
+main {
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 0 20px;
+}
+
+/* Sezione Hero per la home */
+.hero {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.hero h1 {
+  font-size: 2.5em;
   margin-bottom: 20px;
-  border-radius: 5px;
+  color: #004a99;
+}
+
+.hero p {
+  font-size: 1.2em;
+  color: #555;
+}
+
+.hero-img {
+  max-width: 100%;
+  height: auto;
+  margin-top: 20px;
+}
+
+/* Sezione Portfolio */
+.portfolio-section {
+  background-color: #fff;
+  padding: 40px;
+  border-radius: 8px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-pre {
-  background: #eaeaea;
+.portfolio-section h1 {
+  text-align: center;
+  color: #004a99;
+  margin-bottom: 30px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
   padding: 10px;
-  overflow-x: auto;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.btn {
+  background-color: #004a99;
+  color: #fff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1em;
+}
+
+.btn:hover {
+  background-color: #003366;
+}
+
+/* Risultati */
+.result {
+  margin-top: 30px;
+}
+
+.result table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.result table, .result th, .result td {
+  border: 1px solid #ddd;
+}
+
+.result th, .result td {
+  padding: 12px;
+  text-align: center;
+}
+
+.error {
+  color: #d9534f;
+}
+
+/* Footer */
+footer {
+  background-color: #004a99;
+  color: #fff;
+  text-align: center;
+  padding: 10px 0;
+  margin-top: 40px;
 }
