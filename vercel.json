@@ -5,6 +5,17 @@
     { "src": "*.css", "use": "@vercel/static" },
     { "src": "*.js", "use": "@vercel/static" }
   ],
+  "headers": [
+    {
+      "source": "/(.*)\\.html",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/html; charset=utf-8"
+        }
+      ]
+    }
+  ],
   "routes": [
     { "src": "/(.*)", "dest": "/$1" }
   ]
