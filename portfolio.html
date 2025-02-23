@@ -5,14 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Portfolio - Calcola Investimenti</title>
   <link rel="stylesheet" href="styles.css">
-  <!-- Includo Chart.js per il grafico a torta -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <header>
     <nav>
       <div class="logo">
-        <!-- Sostituisci logo.png con il percorso del tuo logo -->
         <img src="logo.png" alt="Logo">
       </div>
       <ul>
@@ -22,7 +20,6 @@
     </nav>
   </header>
   <main>
-    <!-- Sezione per il modello Black-Litterman -->
     <section class="portfolio-section">
       <h1>Calcola il tuo Portafoglio Ottimale</h1>
       <form id="portfolio-form">
@@ -35,44 +32,36 @@
           <input type="number" id="max_deviation" name="max_deviation" step="0.01" required>
         </div>
         <div class="form-group">
-          <label for="views">Views (in formato JSON):</label>
+          <label for="views">Views (JSON):</label>
           <textarea id="views" name="views" rows="4" placeholder='[{"asset": "AAPL", "expected_return": 0.05}]'></textarea>
         </div>
-        <!-- Inseriamo le date per il recupero dei dati storici -->
         <div class="form-group">
-          <label for="start_date">Data Inizio (YYYY-MM-DD):</label>
-          <input type="date" id="start_date" name="start_date" value="2024-01-01" required>
+          <label for="start_date">Data Inizio:</label>
+          <input type="date" id="start_date" name="start_date" required>
         </div>
         <div class="form-group">
-          <label for="end_date">Data Fine (YYYY-MM-DD):</label>
-          <input type="date" id="end_date" name="end_date" value="2025-01-01" required>
+          <label for="end_date">Data Fine:</label>
+          <input type="date" id="end_date" name="end_date" required>
         </div>
         <button type="submit" class="btn">Calcola Portafoglio</button>
       </form>
       <div id="bl-result" class="result"></div>
     </section>
 
-    <!-- Sezione per visualizzare altri dati API -->
     <section class="api-data-section">
       <h2>Dati API</h2>
-      
-      <!-- Pesi Settoriali -->
       <div id="weights-sector-container">
         <h3>Pesi Settoriali</h3>
         <div id="weights-sector-table"></div>
         <canvas id="weights-sector-chart"></canvas>
       </div>
-
-      <!-- Pesi Geografici -->
       <div id="weights-country-container">
         <h3>Pesi Geografici</h3>
         <div id="weights-country-table"></div>
       </div>
-
-      <!-- Dati Storici MSCI -->
       <div id="price-data-container">
         <h3>Dati Storici MSCI</h3>
-        <button id="load-price-data-btn" class="btn">Carica Dati Storici</button>
+        <button id="load-price-data-btn" class="btn">Carica Dati</button>
         <div id="price-data-table"></div>
       </div>
     </section>
@@ -81,14 +70,14 @@
     <p>&copy; 2025 Mio Sito Finanziario. Tutti i diritti riservati.</p>
   </footer>
   <script>
-    // Carica i pesi settoriali e disegna la tabella e il grafico a torta
+    const API_BASE = "https://railway-flask-production-aeda.up.railway.app";
+
     async function loadWeightsSector() {
       try {
-        const response = await fetch('/api/weights/sector');
+        const response = await fetch(`${API_BASE}/api/weights/sector`);
         const data = await response.json();
         let tableHTML = '<table><thead><tr><th>Settore</th><th>Peso</th></tr></thead><tbody>';
-        const labels = [];
-        const values = [];
+        const labels = [], values = [];
         for (const sector in data) {
           tableHTML += `<tr><td>${sector}</td><td>${data[sector]}</td></tr>`;
           labels.push(sector);
@@ -96,102 +85,27 @@
         }
         tableHTML += '</tbody></table>';
         document.getElementById('weights-sector-table').innerHTML = tableHTML;
-        
-        // Disegna il grafico a torta
-        const ctx = document.getElementById('weights-sector-chart').getContext('2d');
-        if(window.sectorChart) {
-          window.sectorChart.destroy();
-        }
-        window.sectorChart = new Chart(ctx, {
-          type: 'pie',
-          data: {
-            labels: labels,
-            datasets: [{
-              data: values,
-              backgroundColor: ['#004a99', '#0066cc', '#0080ff', '#3399ff', '#66b3ff', '#99ccff', '#cce5ff'],
-              borderColor: '#fff',
-              borderWidth: 1
-            }]
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: { position: 'bottom' }
-            }
-          }
-        });
       } catch (error) {
-        console.error('Errore nel caricamento dei pesi settoriali:', error);
+        console.error('Errore nel caricamento:', error);
       }
     }
 
-    // Carica i pesi geografici e li visualizza in una tabella
-    async function loadWeightsCountry() {
-      try {
-        const response = await fetch('/api/weights/country');
-        const data = await response.json();
-        let tableHTML = '<table><thead><tr><th>Paese</th><th>Peso</th></tr></thead><tbody>';
-        for (const country in data) {
-          tableHTML += `<tr><td>${country}</td><td>${data[country]}</td></tr>`;
-        }
-        tableHTML += '</tbody></table>';
-        document.getElementById('weights-country-table').innerHTML = tableHTML;
-      } catch (error) {
-        console.error('Errore nel caricamento dei pesi geografici:', error);
-      }
-    }
-
-    // Carica i dati storici dell'indice MSCI e li mostra in una tabella
-    async function loadPriceData() {
-      try {
-        const startDate = document.getElementById('start_date').value;
-        const endDate = document.getElementById('end_date').value;
-        const response = await fetch(`/api/index/data?start_date=${startDate}&end_date=${endDate}`);
-        const data = await response.json();
-        let tableHTML = '<table><thead><tr><th>Data</th><th>Prezzo</th></tr></thead><tbody>';
-        for (const date in data) {
-          tableHTML += `<tr><td>${date}</td><td>${data[date]}</td></tr>`;
-        }
-        tableHTML += '</tbody></table>';
-        document.getElementById('price-data-table').innerHTML = tableHTML;
-      } catch (error) {
-        console.error('Errore nel caricamento dei dati storici:', error);
-        document.getElementById('price-data-table').innerHTML = '<p class="error">Errore nel caricamento dei dati storici.</p>';
-      }
-    }
-
-    // Gestione del form per il modello Black-Litterman
     document.getElementById('portfolio-form').addEventListener('submit', async function(event) {
       event.preventDefault();
-      const riskAversion = parseFloat(document.getElementById('risk_aversion').value);
-      const maxDeviation = parseFloat(document.getElementById('max_deviation').value);
-      let views;
+      const payload = {
+        risk_aversion: parseFloat(document.getElementById('risk_aversion').value),
+        max_deviation: parseFloat(document.getElementById('max_deviation').value),
+        views: JSON.parse(document.getElementById('views').value || '[]'),
+        start_date: document.getElementById('start_date').value,
+        end_date: document.getElementById('end_date').value
+      };
       try {
-        views = JSON.parse(document.getElementById('views').value || '[]');
-      } catch (error) {
-        alert('Il formato delle views non è valido. Inserisci un JSON valido.');
-        return;
-      }
-      const startDate = document.getElementById('start_date').value;
-      const endDate = document.getElementById('end_date').value;
-      
-      try {
-        // Costruisce il payload senza inviare market_composition (ora gestita nel backend)
-        const payload = {
-          risk_aversion: riskAversion,
-          max_deviation: maxDeviation,
-          views: views,
-          start_date: startDate,
-          end_date: endDate
-        };
-        
-        const blResponse = await fetch('/api/black-litterman/optimal-weights', {
+        const response = await fetch(`${API_BASE}/api/black-litterman/optimal-weights`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-        
-        const result = await blResponse.json();
+        const result = await response.json();
         let resultHTML = '<h2>Risultati Ottimali</h2>';
         if(result.error) {
           resultHTML += `<p class="error">Errore: ${result.error}</p>`;
@@ -204,19 +118,8 @@
         }
         document.getElementById('bl-result').innerHTML = resultHTML;
       } catch (error) {
-        console.error('Errore durante la chiamata alle API per il modello Black-Litterman:', error);
-        document.getElementById('bl-result').innerHTML = '<p class="error">Si è verificato un errore. Riprova più tardi.</p>';
+        console.error('Errore:', error);
       }
-    });
-
-    // Associa il bottone per caricare i dati storici
-    document.getElementById('load-price-data-btn').addEventListener('click', loadPriceData);
-
-    // All'avvio della pagina, carica i dati di settore, paese e storici
-    window.addEventListener('load', () => {
-      loadWeightsSector();
-      loadWeightsCountry();
-      loadPriceData();
     });
   </script>
 </body>
