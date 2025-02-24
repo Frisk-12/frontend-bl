@@ -71,7 +71,7 @@
     // Funzione per caricare le asset class dalla API e popolare il select
     async function loadAssetClasses() {
       try {
-        const response = await fetch(`${API_BASE}/api/weights/country`);
+        const response = await fetch(`${API_BASE}/api/weights/sector`);
         const data = await response.json();
         const assetClassSelect = document.getElementById('asset_class');
         // Reset del select
