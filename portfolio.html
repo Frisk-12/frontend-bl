@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portfolio - Calcola Investimenti</title>
+  <title>Portafoglio Ottimale - Investi con Intelligenza</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -12,71 +13,83 @@
     <nav>
       <div class="logo">
         <img src="logo.png" alt="Logo">
+        <span class="site-title">Investi con Intelligenza</span>
       </div>
       <ul>
         <li><a href="index.html">Home</a></li>
-        <li><a href="portfolio.html" class="active">Portfolio</a></li>
+        <li><a href="portfolio.html" class="active">Portafoglio</a></li>
+        <li><a href="#about">Chi Siamo</a></li>
+        <li><a href="#contact">Contatti</a></li>
       </ul>
     </nav>
+    <div class="hero">
+      <h1>Costruisci il tuo Portafoglio Ottimale</h1>
+      <p>Utilizza il nostro strumento interattivo per scoprire la combinazione ideale di investimenti in base al tuo profilo e alle tue esigenze.</p>
+    </div>
   </header>
   <main>
     <section class="portfolio-section">
-      <h1>Calcola il tuo Portafoglio Ottimale</h1>
+      <h2>Calcola il tuo Portafoglio</h2>
       <form id="portfolio-form">
-        <div class="form-group">
-          <label for="risk_aversion">Risk Aversion:</label>
-          <input type="number" id="risk_aversion" name="risk_aversion" step="0.1" placeholder="Inserisci la tua avversione al rischio [1-5]" required>
-        </div>
-        <div class="form-group">
-          <label for="max_deviation">Max Deviation:</label>
-          <input type="number" id="max_deviation" name="max_deviation" step="0.01" placeholder="Inserisci la massima deviazione rispetto ai pesi iniziali [0.01-1]" required>
-        </div>
-        <div class="form-group">
-          <label for="asset_class">Seleziona Asset Class:</label>
-          <select id="asset_class" name="asset_class">
-            <option value="">-- Seleziona --</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="confidence">Confidence:</label>
-          <input type="number" id="confidence" name="confidence" step="0.0001" placeholder="Inserisci la confidence" disabled>
-        </div>
-        <div class="form-group">
-          <label for="excess_return">Excess Return:</label>
-          <input type="number" id="excess_return" name="excess_return" step="0.0001" placeholder="Inserisci l'excess return" disabled>
-        </div>
-        <div class="form-group">
-          <label for="start_date">Data Inizio:</label>
-          <input type="date" id="start_date" name="start_date" required>
-        </div>
-        <div class="form-group">
-          <label for="end_date">Data Fine:</label>
-          <input type="date" id="end_date" name="end_date" required>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="risk_aversion">Risk Aversion:</label>
+            <input type="number" id="risk_aversion" name="risk_aversion" step="0.1" required>
+          </div>
+          <div class="form-group">
+            <label for="max_deviation">Max Deviation:</label>
+            <input type="number" id="max_deviation" name="max_deviation" step="0.01" required>
+          </div>
+          <div class="form-group">
+            <label for="asset_class">Asset Class:</label>
+            <select id="asset_class" name="asset_class">
+              <option value="">-- Seleziona --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="confidence">Confidence:</label>
+            <input type="number" id="confidence" name="confidence" step="0.0001" placeholder="Inserisci la confidence" disabled>
+          </div>
+          <div class="form-group">
+            <label for="excess_return">Excess Return:</label>
+            <input type="number" id="excess_return" name="excess_return" step="0.0001" placeholder="Inserisci l'excess return" disabled>
+          </div>
+          <div class="form-group">
+            <label for="start_date">Data Inizio:</label>
+            <input type="date" id="start_date" name="start_date" required>
+          </div>
+          <div class="form-group">
+            <label for="end_date">Data Fine:</label>
+            <input type="date" id="end_date" name="end_date" required>
+          </div>
         </div>
         <button type="submit" class="btn">Calcola Portafoglio</button>
       </form>
-      <!-- Contenitore per risultati: tabella e grafico a barre -->
       <div id="result-container" class="result-container" style="display:none;">
-         <div id="result-table" class="result-table"></div>
-         <canvas id="bl-chart" class="result-chart"></canvas>
+        <div id="result-table" class="result-table"></div>
+        <canvas id="bl-chart" class="result-chart"></canvas>
       </div>
     </section>
   </main>
   <footer>
-    <p>&copy; 2025. Tutti i diritti riservati.</p>
+    <div class="footer-content">
+      <p>&copy; 2025 Investi con Intelligenza. Tutti i diritti riservati.</p>
+      <ul>
+        <li><a href="#about">Chi Siamo</a></li>
+        <li><a href="#contact">Contatti</a></li>
+        <li><a href="privacy.html">Privacy</a></li>
+      </ul>
+    </div>
   </footer>
   <script>
     const API_BASE = "https://railway-flask-production-aeda.up.railway.app";
 
-    // Funzione per caricare le asset class dalla API e popolare il select
     async function loadAssetClasses() {
       try {
-        const response = await fetch(`${API_BASE}/api/weights/sector`);
+        const response = await fetch(`${API_BASE}/api/weights/country`);
         const data = await response.json();
         const assetClassSelect = document.getElementById('asset_class');
-        // Reset del select
         assetClassSelect.innerHTML = "<option value=''>-- Seleziona --</option>";
-        // Popola il select con le chiavi del dizionario
         Object.keys(data).forEach(asset => {
           const option = document.createElement("option");
           option.value = asset;
@@ -88,7 +101,6 @@
       }
     }
 
-    // Abilita/disabilita i campi confidence ed excess return in base alla scelta dell'asset class
     document.getElementById("asset_class").addEventListener("change", function() {
       const selected = this.value;
       const confidenceInput = document.getElementById("confidence");
@@ -104,10 +116,8 @@
       }
     });
 
-    // Gestione del submit del form per il calcolo del portafoglio
     document.getElementById('portfolio-form').addEventListener('submit', async function(event) {
       event.preventDefault();
-
       let views = [];
       const assetClass = document.getElementById('asset_class').value;
       const confidence = parseFloat(document.getElementById('confidence').value);
@@ -119,7 +129,6 @@
           excess_return: excessReturn
         });
       }
-
       const payload = {
         risk_aversion: parseFloat(document.getElementById('risk_aversion').value),
         max_deviation: parseFloat(document.getElementById('max_deviation').value),
@@ -127,7 +136,6 @@
         start_date: document.getElementById('start_date').value,
         end_date: document.getElementById('end_date').value
       };
-
       try {
         const response = await fetch(`${API_BASE}/api/black-litterman/optimal-weights`, {
           method: 'POST',
@@ -154,12 +162,8 @@
         tableHTML += '</tbody></table>';
         document.getElementById('result-table').innerHTML = tableHTML;
         resultContainer.style.display = 'flex';
-
-        // Creazione del grafico a barre
         const ctx = document.getElementById('bl-chart').getContext('2d');
-        if(window.blChart) {
-          window.blChart.destroy();
-        }
+        if(window.blChart) { window.blChart.destroy(); }
         window.blChart = new Chart(ctx, {
           type: 'bar',
           data: {
@@ -178,9 +182,7 @@
               y: {
                 beginAtZero: true,
                 ticks: {
-                  callback: function(value) {
-                    return value + '%';
-                  }
+                  callback: function(value) { return value + '%'; }
                 }
               }
             }
@@ -191,7 +193,6 @@
       }
     });
 
-    // Carica le asset class non appena il DOM è completamente caricato
     document.addEventListener("DOMContentLoaded", loadAssetClasses);
   </script>
 </body>
