@@ -32,8 +32,18 @@
           <input type="number" id="max_deviation" name="max_deviation" step="0.01" required>
         </div>
         <div class="form-group">
-          <label for="views">Views (JSON):</label>
-          <textarea id="views" name="views" rows="4" placeholder='[{"assets": "Financials","excess_return": 0.02,"confidence": 0.0001}]'></textarea>
+          <label for="asset_class">Seleziona Asset Class:</label>
+          <select id="asset_class" name="asset_class">
+            <option value="">-- Seleziona --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="confidence">Confidence:</label>
+          <input type="number" id="confidence" name="confidence" step="0.0001" placeholder="Inserisci la confidence" disabled>
+        </div>
+        <div class="form-group">
+          <label for="excess_return">Excess Return:</label>
+          <input type="number" id="excess_return" name="excess_return" step="0.0001" placeholder="Inserisci l'excess return" disabled>
         </div>
         <div class="form-group">
           <label for="start_date">Data Inizio:</label>
@@ -45,24 +55,10 @@
         </div>
         <button type="submit" class="btn">Calcola Portafoglio</button>
       </form>
-      <div id="bl-result" class="result"></div>
-    </section>
-
-    <section class="api-data-section">
-      <h2>Dati API</h2>
-      <div id="weights-sector-container">
-        <h3>Pesi Settoriali</h3>
-        <div id="weights-sector-table"></div>
-        <canvas id="weights-sector-chart"></canvas>
-      </div>
-      <div id="weights-country-container">
-        <h3>Pesi Geografici</h3>
-        <div id="weights-country-table"></div>
-      </div>
-      <div id="price-data-container">
-        <h3>Dati Storici MSCI</h3>
-        <button id="load-price-data-btn" class="btn">Carica Dati</button>
-        <div id="price-data-table"></div>
+      <!-- Contenitore per risultati: tabella e grafico affiancati -->
+      <div id="result-container" class="result-container" style="display:none;">
+         <div id="result-table" class="result-table"></div>
+         <canvas id="bl-chart" class="result-chart"></canvas>
       </div>
     </section>
   </main>
@@ -72,33 +68,63 @@
   <script>
     const API_BASE = "https://railway-flask-production-aeda.up.railway.app";
 
-    async function loadWeightsSector() {
+    // Carica le asset class dalla API e popola il select
+    async function loadAssetClasses() {
       try {
-        const response = await fetch(`${API_BASE}/api/weights/sector`);
+        const response = await fetch(`${API_BASE}/api/weights/country`);
         const data = await response.json();
-        let tableHTML = '<table><thead><tr><th>Settore</th><th>Peso</th></tr></thead><tbody>';
-        const labels = [], values = [];
-        for (const sector in data) {
-          tableHTML += `<tr><td>${sector}</td><td>${data[sector]}</td></tr>`;
-          labels.push(sector);
-          values.push(data[sector]);
+        const assetClassSelect = document.getElementById('asset_class');
+        for (const asset in data) {
+          const option = document.createElement('option');
+          option.value = asset;
+          option.textContent = asset;
+          assetClassSelect.appendChild(option);
         }
-        tableHTML += '</tbody></table>';
-        document.getElementById('weights-sector-table').innerHTML = tableHTML;
       } catch (error) {
-        console.error('Errore nel caricamento:', error);
+        console.error('Errore nel caricamento delle asset classes:', error);
       }
     }
 
+    // Abilita/disabilita i campi confidence ed excess return in base alla scelta dell'asset class
+    document.getElementById('asset_class').addEventListener('change', function() {
+      const selected = this.value;
+      const confidenceInput = document.getElementById('confidence');
+      const excessReturnInput = document.getElementById('excess_return');
+      if (selected) {
+        confidenceInput.disabled = false;
+        excessReturnInput.disabled = false;
+      } else {
+        confidenceInput.disabled = true;
+        excessReturnInput.disabled = true;
+        confidenceInput.value = '';
+        excessReturnInput.value = '';
+      }
+    });
+
     document.getElementById('portfolio-form').addEventListener('submit', async function(event) {
       event.preventDefault();
+
+      // Costruisci l'array views se è stata selezionata un asset class e forniti i valori
+      let views = [];
+      const assetClass = document.getElementById('asset_class').value;
+      const confidence = parseFloat(document.getElementById('confidence').value);
+      const excessReturn = parseFloat(document.getElementById('excess_return').value);
+      if (assetClass && !isNaN(confidence) && !isNaN(excessReturn)) {
+        views.push({
+          assets: assetClass,
+          confidence: confidence,
+          excess_return: excessReturn
+        });
+      }
+
       const payload = {
         risk_aversion: parseFloat(document.getElementById('risk_aversion').value),
         max_deviation: parseFloat(document.getElementById('max_deviation').value),
-        views: JSON.parse(document.getElementById('views').value || '[]'),
+        views: views,
         start_date: document.getElementById('start_date').value,
         end_date: document.getElementById('end_date').value
       };
+
       try {
         const response = await fetch(`${API_BASE}/api/black-litterman/optimal-weights`, {
           method: 'POST',
@@ -106,21 +132,4 @@
           body: JSON.stringify(payload)
         });
         const result = await response.json();
-        let resultHTML = '<h2>Risultati Ottimali</h2>';
-        if(result.error) {
-          resultHTML += `<p class="error">Errore: ${result.error}</p>`;
-        } else {
-          resultHTML += '<table><thead><tr><th>Asset</th><th>Peso</th></tr></thead><tbody>';
-          for(const asset in result) {
-            resultHTML += `<tr><td>${asset}</td><td>${(result[asset] * 100).toFixed(2)}%</td></tr>`;
-          }
-          resultHTML += '</tbody></table>';
-        }
-        document.getElementById('bl-result').innerHTML = resultHTML;
-      } catch (error) {
-        console.error('Errore:', error);
-      }
-    });
-  </script>
-</body>
-</html>
+        const resultContainer = document.ge
