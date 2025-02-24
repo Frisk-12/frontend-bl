@@ -55,7 +55,7 @@
         </div>
         <button type="submit" class="btn">Calcola Portafoglio</button>
       </form>
-      <!-- Contenitore per risultati: tabella e grafico affiancati -->
+      <!-- Contenitore per risultati: tabella e grafico a barre -->
       <div id="result-container" class="result-container" style="display:none;">
          <div id="result-table" class="result-table"></div>
          <canvas id="bl-chart" class="result-chart"></canvas>
@@ -68,47 +68,46 @@
   <script>
     const API_BASE = "https://railway-flask-production-aeda.up.railway.app";
 
-    // Carica le asset class dalla API e popola il select
-async function loadAssetClasses() {
-    try {
-        const response = await fetch("https://railway-flask-production-aeda.up.railway.app/api/weights/country");
+    // Funzione per caricare le asset class dalla API e popolare il select
+    async function loadAssetClasses() {
+      try {
+        const response = await fetch(`${API_BASE}/api/weights/country`);
         const data = await response.json();
-        
-        const assetClassSelect = document.getElementById("asset_class");
-        assetClassSelect.innerHTML = ""; // Svuota il select prima di riempirlo
-
-        Object.keys(data).forEach(assetClass => {
-            const option = document.createElement("option");
-            option.value = assetClass;
-            option.textContent = assetClass;
-            assetClassSelect.appendChild(option);
+        const assetClassSelect = document.getElementById('asset_class');
+        // Reset del select
+        assetClassSelect.innerHTML = "<option value=''>-- Seleziona --</option>";
+        // Popola il select con le chiavi del dizionario
+        Object.keys(data).forEach(asset => {
+          const option = document.createElement("option");
+          option.value = asset;
+          option.textContent = asset;
+          assetClassSelect.appendChild(option);
         });
-    } catch (error) {
+      } catch (error) {
         console.error("Errore nel caricamento delle asset class:", error);
+      }
     }
-}
-    document.addEventListener("DOMContentLoaded", loadAssetClasses);
 
     // Abilita/disabilita i campi confidence ed excess return in base alla scelta dell'asset class
-    document.getElementById('asset_class').addEventListener('change', function() {
+    document.getElementById("asset_class").addEventListener("change", function() {
       const selected = this.value;
-      const confidenceInput = document.getElementById('confidence');
-      const excessReturnInput = document.getElementById('excess_return');
+      const confidenceInput = document.getElementById("confidence");
+      const excessReturnInput = document.getElementById("excess_return");
       if (selected) {
         confidenceInput.disabled = false;
         excessReturnInput.disabled = false;
       } else {
         confidenceInput.disabled = true;
         excessReturnInput.disabled = true;
-        confidenceInput.value = '';
-        excessReturnInput.value = '';
+        confidenceInput.value = "";
+        excessReturnInput.value = "";
       }
     });
 
+    // Gestione del submit del form per il calcolo del portafoglio
     document.getElementById('portfolio-form').addEventListener('submit', async function(event) {
       event.preventDefault();
 
-      // Costruisci l'array views se è stata selezionata un asset class e forniti i valori
       let views = [];
       const assetClass = document.getElementById('asset_class').value;
       const confidence = parseFloat(document.getElementById('confidence').value);
@@ -136,4 +135,64 @@ async function loadAssetClasses() {
           body: JSON.stringify(payload)
         });
         const result = await response.json();
-        const resultContainer = document.ge
+        const resultContainer = document.getElementById('result-container');
+        let tableHTML = '<h2>Risultati Ottimali</h2>';
+        if(result.error) {
+          tableHTML += `<p class="error">Errore: ${result.error}</p>`;
+          resultContainer.style.display = 'block';
+          document.getElementById('result-table').innerHTML = tableHTML;
+          return;
+        }
+        tableHTML += '<table><thead><tr><th>Asset</th><th>Peso</th></tr></thead><tbody>';
+        const labels = [];
+        const values = [];
+        for(const asset in result) {
+          tableHTML += `<tr><td>${asset}</td><td>${(result[asset] * 100).toFixed(2)}%</td></tr>`;
+          labels.push(asset);
+          values.push(result[asset] * 100);
+        }
+        tableHTML += '</tbody></table>';
+        document.getElementById('result-table').innerHTML = tableHTML;
+        resultContainer.style.display = 'flex';
+
+        // Creazione del grafico a barre
+        const ctx = document.getElementById('bl-chart').getContext('2d');
+        if(window.blChart) {
+          window.blChart.destroy();
+        }
+        window.blChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Peso (%)',
+              data: values,
+              backgroundColor: 'rgba(0, 74, 153, 0.7)',
+              borderColor: 'rgba(0, 74, 153, 1)',
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function(value) {
+                    return value + '%';
+                  }
+                }
+              }
+            }
+          }
+        });
+      } catch (error) {
+        console.error('Errore:', error);
+      }
+    });
+
+    // Carica le asset class non appena il DOM è completamente caricato
+    document.addEventListener("DOMContentLoaded", loadAssetClasses);
+  </script>
+</body>
+</html>
