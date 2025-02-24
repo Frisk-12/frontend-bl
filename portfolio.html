@@ -69,21 +69,25 @@
     const API_BASE = "https://railway-flask-production-aeda.up.railway.app";
 
     // Carica le asset class dalla API e popola il select
-    async function loadAssetClasses() {
-      try {
-        const response = await fetch(`${API_BASE}/api/weights/country`);
+async function loadAssetClasses() {
+    try {
+        const response = await fetch("https://railway-flask-production-aeda.up.railway.app/api/weights/country");
         const data = await response.json();
-        const assetClassSelect = document.getElementById('asset_class');
-        for (const asset in data) {
-          const option = document.createElement('option');
-          option.value = asset;
-          option.textContent = asset;
-          assetClassSelect.appendChild(option);
-        }
-      } catch (error) {
-        console.error('Errore nel caricamento delle asset classes:', error);
-      }
+        
+        const assetClassSelect = document.getElementById("asset_class");
+        assetClassSelect.innerHTML = ""; // Svuota il select prima di riempirlo
+
+        Object.keys(data).forEach(assetClass => {
+            const option = document.createElement("option");
+            option.value = assetClass;
+            option.textContent = assetClass;
+            assetClassSelect.appendChild(option);
+        });
+    } catch (error) {
+        console.error("Errore nel caricamento delle asset class:", error);
     }
+}
+    document.addEventListener("DOMContentLoaded", loadAssetClasses);
 
     // Abilita/disabilita i campi confidence ed excess return in base alla scelta dell'asset class
     document.getElementById('asset_class').addEventListener('change', function() {
